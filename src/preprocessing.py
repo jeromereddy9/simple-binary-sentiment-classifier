@@ -1,11 +1,11 @@
-import pandas as pd
-import tensorflow as tf
-from tensorflow.keras.layers import TextVectorization
 import os, sys
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 from utils import path_builder
+import pandas as pd
+import tensorflow as tf
+from tensorflow.keras.layers import TextVectorization
 
 def clean_data(data):
     data_lower = tf.strings.lower(data)
@@ -39,6 +39,7 @@ class Preprocessing:
 
     def get_vocab_dict(self):
         return self.vocab_dict
+
 
 
 
