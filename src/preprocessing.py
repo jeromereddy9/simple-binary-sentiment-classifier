@@ -11,7 +11,7 @@ def clean_data(data):
     data_lower = tf.strings.lower(data)
     return tf.strings.regex_replace(data_lower,r'[^a-zA-Z0-9\s?!]','')
 
-class Preprocessing:
+class Preprocessor:
     def __init__(self,dataset_path,max_sequence_length=12):
         self.dataset_path = dataset_path
         self.data = pd.read_csv(path_builder(dataset_path),encoding='utf-8',dtype='str')
@@ -24,7 +24,6 @@ class Preprocessing:
         )
         self.raw_text = self.data.iloc[:,0].values
         self.vectorizer.adapt(self.raw_text)
-        self.vocab_dict = self.build_vocab_dict()
 
     def get_cleaned_data(self):
         return (self.vectorizer(self.raw_text)).numpy()
@@ -32,19 +31,12 @@ class Preprocessing:
     def get_vocabulary(self):
         return self.vectorizer.get_vocabulary()
 
-    def build_vocab_dict(self):
-        vocab = self.get_vocabulary()
-        vocab_dict = {index:word for index,word in enumerate(vocab)}
-        return vocab_dict
-
-    def get_vocab_dict(self):
-        return self.vocab_dict
-
 
 
 
 path = 'data/IMDB Dataset.csv'
-p = Preprocessing(path)
+p = Preprocessor(path)
+
 
 
 
