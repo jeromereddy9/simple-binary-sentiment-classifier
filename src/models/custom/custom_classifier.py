@@ -17,14 +17,13 @@ class Custom_Classifier:
         self.embedded_vocab = self.build_embedded_vocab()
 
     def build_embedded_vocab(self):
-        rows, cols = self.vocab.shape()
-        embedded_vocab = np.zeros((rows,cols),dtype=1)
-        for i in range(rows):
-            for j in range(cols):
-                if self.vocab[i][j] == '':
-                    embedded_vocab[i][j] = [0] * self.dim
-                else:
-                    embedded_vocab[i][j] = [r.uniform(-0.1, 0.1) for i in range(self.dim)]
+        size = len(self.vocab)
+        embedded_vocab = np.zeros(size,dtype=1)
+        for i in range(size):
+            if self.vocab[i] == '':
+                embedded_vocab[i] = [0] * self.dim
+            else:
+                embedded_vocab[i] = [r.uniform(-0.1, 0.1) for i in range(self.dim)]
 
         return embedded_vocab
 
@@ -41,7 +40,14 @@ class Custom_Classifier:
         finally:
             pkl.dump(self.embedded_vocab, open(path, "wb"))
 
-    
+
+    def embed_sequence(self,sequence):
+        pass
+
+
+    def average_sequence_vectors(self,sequence_vectors):
+        pass
+
 
 
         
