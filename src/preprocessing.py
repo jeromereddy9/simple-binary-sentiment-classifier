@@ -45,7 +45,7 @@ class Preprocessor:
         x = self.get_cleaned_data()
         y = self.labels
         x_temp,x_test,y_temp,y_test = train_test_split(x,y,test_size=self.test_size,random_state=42,stratify=y)
-        x_train,x_val,y_train,y_val = train_test_split(x,y,test_size=self.val_size,random_state=42,stratify=y_temp)
+        x_train,x_val,y_train,y_val = train_test_split(x_temp,y_temp,test_size=self.val_size,random_state=42,stratify=y_temp)
 
         return x_test,x_train,x_val,y_test,y_train,y_val
 
@@ -53,12 +53,9 @@ class Preprocessor:
 
 
 
-path = 'data/IMDB Dataset.csv'
-p = Preprocessor(path)
 
-print(p.get_cleaned_data()[0])
-print(p.get_cleaned_data()[5])
-print((p.get_vocabulary()))
+
+
 
 
 
