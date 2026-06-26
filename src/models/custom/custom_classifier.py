@@ -7,6 +7,7 @@ import pickle as pkl
 import numpy as np
 import random as r
 from src.utils import path_builder
+import torch
 
 
 class Custom_Classifier:
@@ -15,6 +16,7 @@ class Custom_Classifier:
         self.dim = dim
         self.vocab = preprocessor.get_vocab()
         self.embedded_vocab = self.build_embedded_vocab()
+        self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
     def build_embedded_vocab(self):
         size = len(self.vocab)
@@ -42,11 +44,66 @@ class Custom_Classifier:
 
 
     def embed_sequence(self,sequence):
-        pass
+        preprocessed_sequence = self.preprocessor.preprocess_sequence(sequence)
+        embedded_sequence = np.zeros(len(preprocessed_sequence),dtype=float)
+
+        for i in range(len(preprocessed_sequence)):
+            index = preprocessed_sequence[i]
+            embedded_sequence = self.embedded_vocab[index]
+
+        return embedded_sequence
 
 
-    def average_sequence_vectors(self,sequence_vectors):
-        pass
+    def average_sequence_vectors(self,embedded_sequence_vectors):
+        sum_vector = [sum(embedded_sequence_vectors[i]) for i in range(len(embedded_sequence_vectors))]
+        average = sum(sum_vector)/len(sum_vector)
+        return average
+
+    def activation(self,average,softmax=True):
+        average_tensor = torch.tensor(average)
+        if softmax:
+            return torch.softmax(average_tensor,1)
+        else:
+            return torch.sigmoid(average_tensor)
+
+    def classifier(self,activation,threshold=0.5):
+        if activation > threshold:
+            return 1
+        elif activation <= threshold:
+            return 0
+        return None
+
+    def fit(self,epochs=10,lr=0.1):
+        for epoch in range(epochs):
+            correct = 0
+            for sentence,label in zip(self.x_train,self.y_train):
+                embedded_sentence = self.embed_sequence(sentence)
+                average = self.average_sequence_vectors(embedded_sentence)
+                prediction = self.classifier(self.activation(average))
+
+                if prediction == label:
+                    correct += 1
+                else:
+                    direction = 1 if prediction == 1 else 0
+                    for token in sentence:
+                        self.embedded_vocab[token] += direction * lr
+
+            training_accuracy = (correct/ len(self.y_train)) * 100
+            correct = 0
+
+            for sentence,label in zip(self.x_val,self.y_val):
+                embedded_sentence = self.embed_sequence(sentence)
+                average = self.average_sequence_vectors(embedded_sentence)
+                prediction = self.classifier(self.activation(average))
+
+                if prediction == label:
+                    correct += 1
+
+            val_accuracy = (correct / len(self.y_val)) * 100
+            print(f"Epoch {epoch + 1}/{epochs} - Training Accuracy: {training_accuracy:.2f}% | Validation Accuracy: {val_accuracy:.2f}%")
+
+
+
 
 
 
