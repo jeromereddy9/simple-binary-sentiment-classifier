@@ -36,11 +36,11 @@ class Custom_Classifier:
             self.embedded_vocab = pkl.load(open(path, "rb"))
 
 
-    def save_embedded_vocab(self,path):
+    def save_embedded_vocab(self,path='src/models/saved_models'):
         try:
-            pkl.dump(self.embedded_vocab, open(path_builder(path), "wb"))
+            pkl.dump(self.embedded_vocab, open(path_builder(path+'/embedded_vocab.pkl'), "wb"))
         finally:
-            pkl.dump(self.embedded_vocab, open(path, "wb"))
+            pkl.dump(self.embedded_vocab, open(path+'/embedded_vocab.pkl', "wb"))
 
 
     def embed_sequence(self,sequence):
@@ -73,7 +73,7 @@ class Custom_Classifier:
             return 0
         return None
 
-    def fit(self,epochs=10,lr=0.1):
+    def fit(self,epochs=10,lr=0.1,save_model=True):
         for epoch in range(epochs):
             correct = 0
             for sentence,label in zip(self.x_train,self.y_train):
@@ -101,6 +101,19 @@ class Custom_Classifier:
 
             val_accuracy = (correct / len(self.y_val)) * 100
             print(f"Epoch {epoch + 1}/{epochs} - Training Accuracy: {training_accuracy:.2f}% | Validation Accuracy: {val_accuracy:.2f}%")
+
+        if save_model:
+            self.save_embedded_vocab()
+
+
+    def predict(self,sentence):
+        embedded_sentence = self.embed_sequence(sentence)
+        average = self.average_sequence_vectors(embedded_sentence)
+        prediction = self.classifier(self.activation(average))
+
+        return 'Positive' if prediction == 1 else 'Negative'
+
+
 
 
 
