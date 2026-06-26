@@ -11,7 +11,7 @@ import torch
 
 
 class Custom_Classifier:
-    def __init__(self,preprocessor,dim=8):
+    def __init__(self,preprocessor=None,dim=8):
         self.preprocessor = preprocessor
         self.dim = dim
         self.vocab = preprocessor.get_vocab()
@@ -29,18 +29,30 @@ class Custom_Classifier:
 
         return embedded_vocab
 
-    def load_embedded_vocab(self,path):
+    def load_model(self,path):
         try:
-            self.embedded_vocab = pkl.load(open(path_builder(path), "rb"))
-        finally:
-            self.embedded_vocab = pkl.load(open(path, "rb"))
+            model = pkl.load(open(path_builder(path), "rb"))
+            self.preprocessor = model['Preprocessor']
+            self.dim = model['Dimension']
+            self.vocab = model['Vocabulary']
+            self.embedded_vocab = model['Embedded Vocabulary']
+        except FileNotFoundError:
+            model = pkl.load(open(path, "rb"))
+            self.preprocessor = model['Preprocessor']
+            self.dim = model['Dimension']
+            self.vocab = model['Vocabulary']
+            self.embedded_vocab = model['Embedded Vocabulary']
 
 
-    def save_embedded_vocab(self,path='src/models/saved_models'):
+    def save_model(self,path='src/models/saved_models'):
+        model = {'Preprocessor':self.preprocessor,
+                 'Dimension':self.dim,
+                 'Vocabulary':self.vocab,
+                 'Embedded Vocabulary':self.embedded_vocab}
         try:
-            pkl.dump(self.embedded_vocab, open(path_builder(path+'/embedded_vocab.pkl'), "wb"))
-        finally:
-            pkl.dump(self.embedded_vocab, open(path+'/embedded_vocab.pkl', "wb"))
+            pkl.dump(model, open(path_builder(path+'/custom_classifier_model.pkl'), "wb"))
+        except FileExistsError:
+            pkl.dump(model, open(path+'/custom_classifier_model.pkl', "wb"))
 
 
     def embed_sequence(self,sequence):
@@ -103,7 +115,7 @@ class Custom_Classifier:
             print(f"Epoch {epoch + 1}/{epochs} - Training Accuracy: {training_accuracy:.2f}% | Validation Accuracy: {val_accuracy:.2f}%")
 
         if save_model:
-            self.save_embedded_vocab()
+            self.save_model()
 
 
     def predict(self,sentence):
