@@ -14,7 +14,7 @@ def clean_data(data):
     return tf.strings.regex_replace(data_lower,r'[^a-zA-Z0-9\s?!]','')
 
 class Preprocessor:
-    def __init__(self,dataset_path=None,max_sequence_length=12,training_split=0.7,val_split=0.15,test_split=0.15):
+    def __init__(self,dataset_path=None,max_sequence_length=8,training_split=0.7,val_split=0.15,test_split=0.15):
         self.dataset_path = dataset_path
         self.training_size = training_split
         self.test_size = test_split
