@@ -1,4 +1,9 @@
 import os, sys
+
+from keras.src.legacy.backend import gradients
+from keras.src.ops import dtype
+from sympy.codegen.ast import continue_
+
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -8,13 +13,15 @@ import numpy as np
 import random as r
 from src.utils import path_builder
 import torch
+import torch.nn as nn
 
 
 class Custom_Classifier:
-    def __init__(self,preprocessor=None,dim=8):
+    def __init__(self,preprocessor=None,dim=8,lr = 0.025):
         self.preprocessor = preprocessor
         self.dim = dim
         self.vocab = preprocessor.get_vocabulary()
+        self.lr = lr
         self.embedded_vocab = self.build_embedded_vocab()
         self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
@@ -37,65 +44,159 @@ class Custom_Classifier:
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
+            self.lr = model['Learning Rate']
+
         except FileNotFoundError:
             model = pkl.load(open(path, "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
+            self.lr = model['Learning Rate']
+
 
 
     def save_model(self,path='src/models/saved_models'):
         model = {'Preprocessor':self.preprocessor,
                  'Dimension':self.dim,
                  'Vocabulary':self.vocab,
-                 'Embedded Vocabulary':self.embedded_vocab}
+                 'Embedded Vocabulary':self.embedded_vocab,
+                 'Learning Rate':self.lr}
         try:
             pkl.dump(model, open(path_builder(path+'/custom_classifier_model.pkl'), "wb"))
         except FileExistsError:
             pkl.dump(model, open(path+'/custom_classifier_model.pkl', "wb"))
 
 
-    def embed_sequence(self,sequence,preprocess=False):
+    def embed_sentence(self,sequence,preprocess=False):
+        embedded_sentence = []
         if preprocess:
             preprocessed_sequence = self.preprocessor.preprocess_sequence(sequence)
-            embedded_sequence = []
             for i in range(len(preprocessed_sequence)):
                 index = preprocessed_sequence[i]
-                embedded_sequence.append(self.embedded_vocab[index])
+                embedded_sentence.append(self.embedded_vocab[index])
         else:
-            embedded_sequence = []
             for i in range(len(sequence)):
                 index = sequence[i]
-                embedded_sequence.append(self.embedded_vocab[index])
+                embedded_sentence.append(self.embedded_vocab[index])
 
-        return embedded_sequence
+        return embedded_sentence
+
+    def set_learning_rate(self,lr):
+        self.lr = lr
+
+    def mean_pool(self,embedded_sentence):
+        sentence_embedding = np.mean(embedded_sentence,axis=0)
+        return sentence_embedding
+
+    def activation(self,sentence_embedding):
+        sentence_tensor = torch.tensor(sentence_embedding)
+        probability = torch.sigmoid(sentence_tensor)
+        return probability
+
+    def calculate_loss(self,y_prediction,y_true):
+        prediction = y_prediction.detach().float().flatten()
+        true_label = torch.tensor(y_true,dtype=torch.float32).flatten()
+        criterion = nn.BCEWithLogitsLoss()
+        loss = criterion(prediction,true_label)
+        return loss
+
+    def threshold_classification(self,probability,threshold=0.5):
+        if probability > threshold:
+            return 'positive'
+        else:
+            return 'negative'
+
+    def fit(self,epochs=10,save_model=True):
+        num_samples_train = len(self.y_train)
+        num_samples_val = len(self.y_val)
+
+        print("Training Starting:")
+        for epoch in range(epochs):
+            correct = 0
+            train_loss = 0
+            for sentence,label in zip(self.x_train,self.y_train):
+                embedded_sentence = self.embed_sentence(sentence)
+                averaged_sentence = self.mean_pool(embedded_sentence)
+                activation = self.activation(averaged_sentence)
+                probability = torch.exp(torch.mean(torch.log(activation)))
+                classification = self.threshold_classification(probability)
+
+                if classification == label:
+                    correct += 1
+                label_numerical = 1 if label == 'positive' else 0
+                loss = self.calculate_loss(probability,label_numerical)
+                train_loss += loss
+                error = probability - label_numerical
+
+                gradient = (error * activation * (1-activation))/len(sentence)
+                gradient = gradient.detach().numpy()
+
+                for i in range(len(sentence)):
+                    token_id = sentence[i]
+
+                    if token_id == 0:
+                        continue
+
+                    self.embedded_vocab[token_id] -= self.lr * gradient
+
+            training_accuracy = (correct/num_samples_train) * 100
+
+            correct = 0
+            val_loss = 0
+            for sentence,label in zip(self.x_val,self.y_val):
+                embedded_sentence = self.embed_sentence(sentence)
+                averaged_sentence = self.mean_pool(embedded_sentence)
+                activation = self.activation(averaged_sentence)
+                probability = torch.exp(torch.mean(torch.log(activation)))
+                classification = self.threshold_classification(probability)
+
+                if classification == label:
+                    correct += 1
+
+                label_numerical = 1 if label == 'positive' else 0
+                loss = self.calculate_loss(probability, label_numerical)
+                val_loss += loss
+
+            val_accuracy = (correct/num_samples_val) * 100
+
+            print(f"Epoch {epoch + 1}/{epochs} - "
+                  f"Train Acc: {training_accuracy:.2f}% | Train Loss: {train_loss/num_samples_train:.4f} | "
+                  f"Val Acc: {val_accuracy:.2f}% | Val Loss: {val_loss/num_samples_val:.4f}")
+
+        if save_model:
+            self.save_model()
 
 
-    def average(self,embedded_sequence_vectors):
-        pass
-
-    def activation(self,embedded_sequences):
-        pass
-
-    def classifier(self,activation,threshold=0.5):
-        pass
-
-    def fit(self,epochs=10,lr=0.025,save_model=True):
-       pass
 
 
-    def predict(self,sentence):
-        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 path = 'data/IMDB Dataset.csv'
-p = Preprocessor(path)
+p = Preprocessor(path,16)
 
-model = Custom_Classifier(preprocessor=p)
+model = Custom_Classifier(preprocessor=p,dim=16,lr=0.1)
 
-model.fit(5)
+model.fit(30)
 
 
 
