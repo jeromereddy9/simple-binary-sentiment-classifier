@@ -40,7 +40,7 @@ class Custom_Classifier:
 
     def load_model(self,path='src/models/saved_models',name='/custom_classifier_model.pkl'):
         try:
-            model = pkl.load(open(path_builder(path+name), "rb"))
+            model = pkl.load(open(path_builder(path+"/"+name), "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
@@ -50,7 +50,7 @@ class Custom_Classifier:
             self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
         except FileNotFoundError:
-            model = pkl.load(open(path+name, "rb"))
+            model = pkl.load(open(path+"/"+name, "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
@@ -69,9 +69,9 @@ class Custom_Classifier:
                  'Learning Rate':self.lr,
                  'Epochs':self.epochs}
         try:
-            pkl.dump(model, open(path_builder(path+name), "wb"))
+            pkl.dump(model, open(path_builder(path+"/"+name), "wb"))
         except FileExistsError:
-            pkl.dump(model, open(path+name, "wb"))
+            pkl.dump(model, open(path+"/"+name, "wb"))
 
 
     def embed_sentence(self,sequence,preprocess=False):
@@ -116,10 +116,11 @@ class Custom_Classifier:
         else:
             return 'negative'
 
-    def fit(self,epochs=10,save_model=True,path=None,name=None):
+    def fit(self,epochs=10,save_model=True,path=None,name=None,decay_rate=0.95):
         self.epochs = epochs
         num_samples_train = len(self.y_train)
         num_samples_val = len(self.y_val)
+        learning_rate = self.lr
 
         print("Training Starting:")
         for epoch in range(epochs):
@@ -148,9 +149,10 @@ class Custom_Classifier:
                     if token_id == 0:
                         continue
 
-                    self.embedded_vocab[token_id] -= self.lr * gradient
+                    self.embedded_vocab[token_id] -= learning_rate * gradient
 
             training_accuracy = (correct/num_samples_train) * 100
+            learning_rate = learning_rate * decay_rate
 
             correct = 0
             val_loss = 0
@@ -204,6 +206,10 @@ class Custom_Classifier:
 
 
 
+# path = 'data/IMDB Dataset.csv'
+# p = Preprocessor(path,128)
+# model = Custom_Classifier(p,64,0.2)
+# model.fit(100,name='custom_classifier_model_v1.2.pkl',decay_rate=0.99)
 
 
 
