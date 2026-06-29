@@ -44,6 +44,9 @@ class Preprocessor:
     def preprocess_sequence(self,sequence):
         return (self.vectorizer(sequence)).numpy()
 
+    def get_max_sequence_length(self):
+        return self.max_sequence_length
+
     def get_train_test_val_splits(self):
         np.random.seed(42)
         x = self.get_cleaned_data()
