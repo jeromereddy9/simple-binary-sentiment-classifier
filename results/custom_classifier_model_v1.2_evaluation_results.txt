@@ -1,0 +1,20 @@
+Model Summary:
+Dims -> 64
+Learning Rate -> 0.2
+Max Sequence Length -> 128
+Epochs -> 100
+Evaluation Starting:
+
+Accuracy: 75.83%
+
+              precision    recall  f1-score   support
+
+    negative       0.76      0.75      0.76      3750
+    positive       0.75      0.77      0.76      3750
+
+    accuracy                           0.76      7500
+   macro avg       0.76      0.76      0.76      7500
+weighted avg       0.76      0.76      0.76      7500
+
+[[2811  939]
+ [ 874 2876]]
