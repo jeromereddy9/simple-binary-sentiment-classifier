@@ -8,12 +8,15 @@ import tensorflow as tf
 from tensorflow.keras.layers import TextVectorization
 from sklearn.model_selection import train_test_split
 import numpy as np
-
-def clean_data(data):
-    data_lower = tf.strings.lower(data)
-    return tf.strings.regex_replace(data_lower,r'[^a-zA-Z0-9\s?!]','')
+from keras.saving import register_keras_serializable
 
 class Preprocessor:
+    @staticmethod
+    @register_keras_serializable()
+    def clean_data(data):
+        data_lower = tf.strings.lower(data)
+        return tf.strings.regex_replace(data_lower, r'[^a-zA-Z0-9\s?!]', '')
+
     def __init__(self,dataset_path=None,max_sequence_length=8,training_split=0.7,val_split=0.15,test_split=0.15):
         self.dataset_path = dataset_path
         self.training_size = training_split
@@ -22,7 +25,7 @@ class Preprocessor:
         self.data = pd.read_csv(path_builder(dataset_path),encoding='utf-8',dtype='str')
         self.max_sequence_length = max_sequence_length
         self.vectorizer = TextVectorization(
-            standardize=clean_data,
+            standardize=self.clean_data,
             split='whitespace',
             output_mode='int',
             output_sequence_length=self.max_sequence_length
@@ -30,6 +33,7 @@ class Preprocessor:
         self.raw_text = self.data.iloc[:,0].values
         self.labels = self.data.iloc[:,1].values
         self.vectorizer.adapt(self.raw_text)
+
 
     def get_cleaned_data(self):
         return (self.vectorizer(self.raw_text)).numpy()
