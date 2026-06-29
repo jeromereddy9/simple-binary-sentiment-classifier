@@ -16,6 +16,7 @@ class Custom_Classifier:
         self.preprocessor = preprocessor
         self.dim = dim
         self.lr = lr
+        self.epochs = 10
         if self.preprocessor is not None:
             self.vocab = preprocessor.get_vocabulary()
             self.embedded_vocab = self.build_embedded_vocab()
@@ -37,37 +38,40 @@ class Custom_Classifier:
 
         return embedded_vocab
 
-    def load_model(self,path='src/models/saved_models'):
+    def load_model(self,path='src/models/saved_models',name='/custom_classifier_model.pkl'):
         try:
-            model = pkl.load(open(path_builder(path+'/custom_classifier_model.pkl'), "rb"))
+            model = pkl.load(open(path_builder(path+name), "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
             self.lr = model['Learning Rate']
+            self.epochs = model['Epochs']
             self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
         except FileNotFoundError:
-            model = pkl.load(open(path+'/custom_classifier_model.pkl', "rb"))
+            model = pkl.load(open(path+name, "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
             self.lr = model['Learning Rate']
+            self.epochs = model['Epochs']
             self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
 
 
-    def save_model(self,path='src/models/saved_models'):
+    def save_model(self,path='src/models/saved_models',name='/custom_classifier_model.pkl'):
         model = {'Preprocessor':self.preprocessor,
                  'Dimension':self.dim,
                  'Vocabulary':self.vocab,
                  'Embedded Vocabulary':self.embedded_vocab,
-                 'Learning Rate':self.lr}
+                 'Learning Rate':self.lr,
+                 'Epochs':self.epochs}
         try:
-            pkl.dump(model, open(path_builder(path+'/custom_classifier_model.pkl'), "wb"))
+            pkl.dump(model, open(path_builder(path+name), "wb"))
         except FileExistsError:
-            pkl.dump(model, open(path+'/custom_classifier_model.pkl', "wb"))
+            pkl.dump(model, open(path+name, "wb"))
 
 
     def embed_sentence(self,sequence,preprocess=False):
@@ -112,7 +116,8 @@ class Custom_Classifier:
         else:
             return 'negative'
 
-    def fit(self,epochs=10,save_model=True):
+    def fit(self,epochs=10,save_model=True,path=None,name=None):
+        self.epochs = epochs
         num_samples_train = len(self.y_train)
         num_samples_val = len(self.y_val)
 
@@ -170,10 +175,19 @@ class Custom_Classifier:
                   f"Val Acc: {val_accuracy:.2f}% | Val Loss: {val_loss/num_samples_val:.4f}")
 
         if save_model:
-            self.save_model()
+            if path is None:
+                if name is None:
+                    self.save_model()
+                else:
+                    self.save_model(name=name)
+            else:
+                if name is None:
+                    self.save_model(path=path)
+                else:
+                    self.save_model(path=path,name=name)
 
-    def predict(self,sentence):
-        embedded_sentence = self.embed_sentence(sentence,True)
+    def predict(self,sentence,preprocess=False):
+        embedded_sentence = self.embed_sentence(sentence,preprocess)
         averaged_sentence = self.mean_pool(embedded_sentence)
         activation = self.activation(averaged_sentence)
         probability = torch.exp(torch.mean(torch.log(activation)))
@@ -181,10 +195,17 @@ class Custom_Classifier:
 
         return classification
 
+    def get_model_summary(self):
+        print("Model Summary:")
+        print(f"Dims -> {self.dim}")
+        print(f"Learning Rate -> {self.lr}")
+        print(f"Max Sequence Length -> {self.preprocessor.get_max_sequence_length()}")
+        print(f"Epochs -> {self.epochs}")
 
 
 
-path = 'data/IMDB Dataset.csv'
+
+
 
 
 
