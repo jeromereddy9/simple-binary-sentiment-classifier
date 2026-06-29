@@ -1,9 +1,4 @@
 import os, sys
-
-from keras.src.legacy.backend import gradients
-from keras.src.ops import dtype
-from sympy.codegen.ast import continue_
-
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -20,10 +15,15 @@ class Custom_Classifier:
     def __init__(self,preprocessor=None,dim=8,lr = 0.025):
         self.preprocessor = preprocessor
         self.dim = dim
-        self.vocab = preprocessor.get_vocabulary()
         self.lr = lr
-        self.embedded_vocab = self.build_embedded_vocab()
-        self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
+        if self.preprocessor is not None:
+            self.vocab = preprocessor.get_vocabulary()
+            self.embedded_vocab = self.build_embedded_vocab()
+            self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
+        else:
+            self.vocab = None
+            self.embedded_vocab = None
+            self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = None,None,None,None,None,None
 
     def build_embedded_vocab(self):
         size = len(self.vocab)
@@ -37,22 +37,24 @@ class Custom_Classifier:
 
         return embedded_vocab
 
-    def load_model(self,path):
+    def load_model(self,path='src/models/saved_models'):
         try:
-            model = pkl.load(open(path_builder(path), "rb"))
+            model = pkl.load(open(path_builder(path+'/custom_classifier_model.pkl'), "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
             self.lr = model['Learning Rate']
+            self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
         except FileNotFoundError:
-            model = pkl.load(open(path, "rb"))
+            model = pkl.load(open(path+'/custom_classifier_model.pkl', "rb"))
             self.preprocessor = model['Preprocessor']
             self.dim = model['Dimension']
             self.vocab = model['Vocabulary']
             self.embedded_vocab = model['Embedded Vocabulary']
             self.lr = model['Learning Rate']
+            self.x_test, self.x_train, self.x_val, self.y_test, self.y_train, self.y_val = self.preprocessor.get_train_test_val_splits()
 
 
 
@@ -84,6 +86,9 @@ class Custom_Classifier:
 
     def set_learning_rate(self,lr):
         self.lr = lr
+
+    def get_test_split(self):
+        return self.x_test,self.y_test
 
     def mean_pool(self,embedded_sentence):
         sentence_embedding = np.mean(embedded_sentence,axis=0)
@@ -167,36 +172,26 @@ class Custom_Classifier:
         if save_model:
             self.save_model()
 
+    def predict(self,sentence):
+        embedded_sentence = self.embed_sentence(sentence,True)
+        averaged_sentence = self.mean_pool(embedded_sentence)
+        activation = self.activation(averaged_sentence)
+        probability = torch.exp(torch.mean(torch.log(activation)))
+        classification = self.threshold_classification(probability)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return classification
 
 
 
 
 path = 'data/IMDB Dataset.csv'
-p = Preprocessor(path,16)
 
-model = Custom_Classifier(preprocessor=p,dim=16,lr=0.1)
 
-model.fit(30)
+
+
+
+
+
 
 
 
