@@ -1,0 +1,35 @@
+Model Summary:
+Dims -> 64
+Learning Rate -> 0.2
+Max Sequence Length -> 128
+Epochs -> 100
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Evaluation Starting:
+
+CUSTOM MODEL RESULTS
+Accuracy: 75.83%
+              precision    recall  f1-score   support
+
+    negative       0.76      0.75      0.76      3750
+    positive       0.75      0.77      0.76      3750
+
+    accuracy                           0.76      7500
+   macro avg       0.76      0.76      0.76      7500
+weighted avg       0.76      0.76      0.76      7500
+
+[[2811  939]
+ [ 874 2876]]
+
+BASELINE MODEL RESULTS
+Accuracy: 85.83%
+              precision    recall  f1-score   support
+
+           0       0.85      0.87      0.86      3750
+           1       0.86      0.85      0.86      3750
+
+    accuracy                           0.86      7500
+   macro avg       0.86      0.86      0.86      7500
+weighted avg       0.86      0.86      0.86      7500
+
+[[3250  500]
+ [ 563 3187]]
