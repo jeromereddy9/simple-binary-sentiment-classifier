@@ -1,4 +1,4 @@
-from src.models.custom.custom_classifier import Custom_Classifier
+from src.models.custom.custom_classifier_v1 import Custom_Classifier
 from src.preprocessing import Preprocessor
 
 

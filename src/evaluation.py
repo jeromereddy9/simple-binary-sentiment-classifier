@@ -1,7 +1,7 @@
 import numpy as np
 from tensorflow.keras.models import load_model
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from src.models.custom.custom_classifier import Custom_Classifier
+from src.models.custom.custom_classifier_v1 import Custom_Classifier
 from src.utils import path_builder
 
 # Load models
