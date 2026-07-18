@@ -105,28 +105,26 @@ The baseline has a simple setup, it uses the Adam optimiser and Binary Cross-Ent
 
 ## Results
 
-### Table 1: Evaluation Results
+### Table 1: Model Performance
 
-| Model     | Polarity | Precision | Recall | F1-Score | Accuracy |
-|-----------|----------|-----------|--------|----------|----------|
-| **Custom**| Positive | 0.75      | 0.77   | 0.76     | **75.83%** |
-|           | Negative | 0.76      | 0.75   | 0.76     |          |
-| **Baseline**| Positive | 0.86   | 0.85   | 0.86     | **85.83%** |
-|           | Negative | 0.85      | 0.87   | 0.86     |          |
+| Model | Accuracy | Precision | Recall | F1-Score |
+|-------|---------:|----------:|-------:|---------:|
+| Custom Classifier | **75.83%** | 0.76 | 0.76 | 0.76 |
+| Baseline Classifier | **85.83%** | 0.86 | 0.86 | 0.86 |
 
 ### Table 2: Custom Classifier Confusion Matrix
 
-| Prediction | Negative | Positive |
-|------------|----------|----------|
-| **Negative** | 2811     | 939      |
-| **Positive** | 874      | 2876     |
+| Actual \ Predicted | Negative | Positive |
+|--------------------|---------:|---------:|
+| **Negative**       | 2811     | 939      |
+| **Positive**       | 874      | 2876     |
 
 ### Table 3: Baseline Classifier Confusion Matrix
 
-| Prediction | Negative | Positive |
-|------------|----------|----------|
-| **Negative** | 3250     | 500      |
-| **Positive** | 563      | 3187     |
+| Actual \ Predicted | Negative | Positive |
+|--------------------|---------:|---------:|
+| **Negative**       | 3250     | 500      |
+| **Positive**       | 563      | 3187     |
 
 ---
 
